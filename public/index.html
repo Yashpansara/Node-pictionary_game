@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible"content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./css/index1.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <div class="outer">
+        <h1>The Pictionary Game - Play with Friends</h1>
+        <div class="inner">
+            <h2>Create room</h2>
+            <label>Username:</label>
+            <input type="text" id="i1">
+            <button class="join join1">Create room</button>
+        </div>
+        <div class="inner">
+            <h2>Join room</h2>
+            <p>Username:</p>
+            <input type="text" id="i21">
+            <p>Room ID:</p>
+            <input type="number" id="i22">
+            <button class="join join2">Join room</button>
+        </div>
+    </div>
+
+    <div class="main hidden">
+        <div class="div1">
+            <div class="div1-up">
+                
+            </div>
+            <div class="div1-down">
+                <button>Start</button>
+                <button id="room-id" onclick="coppy()">room Id</button>
+                <button id="leave">Leave</button>
+            </div>
+        </div>
+        <div class="div2">
+        </div>
+        <div class="div3">
+            <div class="div3-up">
+            </div>
+            <div class="div3-down">
+                <input type="text">
+                <button>Send</button>
+            </div>
+        </div>
+    </div>
+    <script src="./script.js"></script>
+    <script>
+        function coppy() 
+        {
+            let copytext = document.getElementById("room-id").innerText;
+
+            // Use the Clipboard API to copy text to the clipboard
+            navigator.clipboard.writeText(copytext).then(() => {
+                console.log("Room ID copied to clipboard:", copytext);
+            }).catch((err) => {
+                console.error("Error copying to clipboard:", err);
+            });
+        }
+    </script>
+</body>
+</html>
