@@ -7,9 +7,20 @@ let socket=io();
 
 const display_user= function(user)
 {
-    const div=document.createElement("div");
-    div.textContent=user;
-    document.querySelector('.div1-up').append(div);
+    var div = document.querySelector(".username");
+    var divClone = div.cloneNode(true);
+    divClone.textContent=user;
+    document.querySelector('.div1-up').append(divClone);
+
+};
+
+const display_chat =function(user,text)
+{
+    var div=document.querySelector(".chat");
+    var divClone=div.cloneNode(true);
+    divClone.querySelector('h4').textContent=user;
+    divClone.querySelector('p').textContent=text;
+    document.querySelector('.div3-up').append(divClone);
 };
 
 
@@ -89,13 +100,6 @@ leave.addEventListener('click',function(){
         parent.removeChild(parent.firstChild);
     }
     change_html();
-    // username="";
-    // room=0;
-    // let parent=document.querySelector('.div1-up');
-    // while(parent.children)
-    // {
-    //     parent.removeChild(parent.firstChild);
-    // }
 });
 
 socket.on('leave-member',(username)=>{
@@ -109,6 +113,23 @@ socket.on('leave-member',(username)=>{
         }
     }
 });
+
+
+const send=document.querySelector("#send");
+send.addEventListener('click',function(){
+    
+    const text=document.querySelector('#chat-text').value;
+    if(text=="")return;
+    socket.emit('send-text',username,room,text);
+    display_chat(username,text);
+    document.querySelector('#chat-text').value="";
+
+});
+
+socket.on('receive-text',(user,text)=>{
+    display_chat(user,text);
+});
+
 
 
 

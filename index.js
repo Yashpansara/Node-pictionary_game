@@ -73,9 +73,12 @@ io.on('connection',socket=>{
 
   socket.on('leave',(username,room)=>{
     socket.leave(room);
-    console.log(room_data.get(room));
     if(room_data.has(room))room_data.get(room).delete(username);
     socket.to(room).emit('leave-member',username);
+  });
+
+  socket.on('send-text',(username,room,text)=>{
+    socket.to(room).emit('receive-text',username,text);
   });
 
 
