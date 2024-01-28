@@ -64,7 +64,7 @@ const join2=document.querySelector('.join2');
 join2.addEventListener('click',function(){
     const i21=document.querySelector('#i21');
     const i22=document.querySelector('#i22');
-    console.log(i21.value," ",i22.value);
+
     if(!i21.value || !i22.value)return;
 
     const data={};
@@ -92,14 +92,28 @@ socket.on('member-data',arr=>{
 const leave=document.querySelector("#leave");
 leave.addEventListener('click',function(){
     socket.emit('leave',username,room);
+    
+    // change_html();
+
     username="";
     room=0;
     let parent=document.querySelector('.div1-up');
-    while(parent.children)
-    {
-        parent.removeChild(parent.firstChild);
-    }
+    Array.from(parent.children).forEach(child => {
+        if (child !== parent.firstElementChild) {
+            parent.removeChild(child);
+        }
+    });
+
+    parent=document.querySelector('.div3-up');
+    Array.from(parent.children).forEach(child => {
+        if (child !== parent.firstElementChild) {
+            parent.removeChild(child);
+        }
+    });
+
     change_html();
+
+
 });
 
 socket.on('leave-member',(username)=>{
