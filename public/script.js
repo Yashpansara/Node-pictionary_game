@@ -148,4 +148,35 @@ socket.on('receive-text',(user,text)=>{
 
 
 
+const canvas = document.querySelector('.canvas');
+const ctx = canvas.getContext('2d');
+
+let x,y;
+let isDrawing = false;
+
+canvas.onmousedown= (e) => {
+    ctx.moveTo(x,y);
+    isDrawing = true;
+};
+
+canvas.onmouseup= (e) => {
+    isDrawing = false;
+};
+
+canvas.onmousemove= (e)=> {
+    x=e.clientX;
+    y=e.clientY;
+    
+    if(isDrawing)
+    {
+        ctx.lineTo(x,y);
+        ctx.stroke();
+    }
+};
+
+
+
+
+
+
 

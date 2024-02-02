@@ -10,6 +10,15 @@ import { type } from "os";
 
 'use strict';
 
+// way to use socket io
+// let express=require('express');
+// let app=express();
+// let httpServer=require('http').createServer(app);
+// let io=require('socket.io')(httpServer);
+
+// let PORT=process.env.PORT || 3000;
+// httpServer.listen(PORT,()=>console.log(`server started on ${PORT}`));
+
 const app = express();
 const port = 3000;
 const server = createServer(app);
