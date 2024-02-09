@@ -29,6 +29,9 @@
     </div>
 
     <div class="main hidden">
+        <div class="show hidden">
+            <h2>Your turn</h2>
+        </div>
         <div class="div1">
             <div class="div1-up">
                 <div class="username">Room Menbers</div>
@@ -40,10 +43,21 @@
             </div>
         </div>
         <div class="div2">
+            <div class="div2-word">
+                <div class="word">word</div>
+                <div class="time">time</div>
+            </div>
             <div class="div2-up">
-                <canvas class="canvas"></canvas>
+                <canvas id="canvas"></canvas> 
             </div>
             <div class="div2-down">
+                <div class="div2-down1">
+                    <input id="select-color" type="color">
+                    <button id="clear">clear</button>
+                </div>
+                <div class="div2-down2">
+                    <input type="range" id="font"  min="0.5" max="5">
+                </div>
             </div>
         </div>
         <div class="div3">

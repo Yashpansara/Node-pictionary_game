@@ -145,38 +145,172 @@ socket.on('receive-text',(user,text)=>{
 });
 
 
+// let canvas = document.querySelector('canvas');
+// let parentDiv = document.querySelector('.div2-up');
+// canvas.style.width='100%';
+// canvas.style.height='100%';
+// canvas.style.boxSizing = 'border-box';
 
+// let ctx=canvas.getContext('2d');
 
+// let isDrawing = false;
+// let lastX = 0;
+// let lastY = 0;
 
-const canvas = document.querySelector('.canvas');
-const ctx = canvas.getContext('2d');
-
-let x,y;
-let isDrawing = false;
-
-canvas.onmousedown= (e) => {
-    ctx.moveTo(x,y);
-    isDrawing = true;
-};
-
-canvas.onmouseup= (e) => {
-    isDrawing = false;
-};
-
-canvas.onmousemove= (e)=> {
-    x=e.clientX;
-    y=e.clientY;
+// function draw(x, y) {
+//     if (!isDrawing) return;
     
-    if(isDrawing)
+//     ctx.beginPath();
+//     ctx.moveTo(lastX, lastY);
+//     ctx.lineTo(x, y);
+//     ctx.stroke();
+
+//     lastX = x;
+//     lastY = y;
+// }
+
+// canvas.addEventListener('mousedown', function(event) {
+//     isDrawing = true;
+//     let pos = getMousePos(canvas, event);
+//     lastX = pos.x;
+//     lastY = pos.y;
+// });
+
+// canvas.addEventListener('mousemove', function(event) {
+//     let pos = getMousePos(canvas, event);
+//     draw(pos.x, pos.y);
+// });
+
+// canvas.addEventListener('mouseup', function() {
+//     isDrawing = false;
+// });
+
+// function getMousePos(canvas, event) {
+
+//     var rect = canvas.getBoundingClientRect(),
+//       scaleX = canvas.width / rect.width,
+//       scaleY = canvas.height / rect.height;
+  
+//     return {
+//       x: (event.clientX - rect.left) * scaleX,
+//       y: (event.clientY - rect.top) * scaleY
+//     }
+// }
+
+
+let canvas = document.querySelector('canvas');
+let ctx=canvas.getContext('2d');
+canvas.style.width='100%';
+canvas.style.height='100%';
+canvas.style.boxSizing = 'border-box';
+
+let is_painting =false;
+let lineWidth=0.5;
+
+let clear=document.getElementById('clear');
+clear.addEventListener('click',()=>{
+    socket.emit('clear',room);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.beginPath();
+
+    let data={};
+    data.action="clear";
+    socket.emit('change',data,room);
+});
+
+let select_color=document.getElementById('select-color');
+select_color.addEventListener('change',()=>{
+    ctx.strokeStyle=select_color.value;
+    ctx.beginPath();
+
+    let data={};
+    data.action="color";
+    data.color=select_color.value;
+    socket.emit('change',data,room);
+
+});
+
+let font=document.getElementById('font');
+font.addEventListener('change',()=>{
+    // lineWidth=font.value;
+    ctx.lineWidth=font.value;
+    ctx.beginPath();
+
+    let data={};
+    data.action="font";
+    data.lineWidth=font.value;
+    socket.emit('change',data,room);
+
+});
+
+canvas.addEventListener('mousedown',(e)=>{
+    is_painting=true;
+    let pos = getMousePos(canvas, e);
+
+    socket.emit('mousedown',pos,room);
+
+    ctx.moveTo(pos.x,pos.y);
+});
+
+canvas.addEventListener('mouseup',(e)=>{
+    is_painting=false;
+});
+
+socket.on('ondraw',(data)=>{
+    // ctx.lineWidth=data.lineWidth;
+    // ctx.strokeStyle=data.color;
+    ctx.lineTo(data.x,data.y);
+    ctx.stroke();
+});
+socket.on('onmousedown',(data)=>{
+    ctx.moveTo(data.x,data.y);
+});
+socket.on('change',(data)=>{
+    if(data.action=="clear")
     {
-        ctx.lineTo(x,y);
-        ctx.stroke();
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.beginPath();
     }
-};
+    else if(data.action=="font")
+    {
+        ctx.lineWidth=data.lineWidth;
+        ctx.beginPath();
+    }
+    else if(data.action=="color")
+    {
+        ctx.strokeStyle=data.color;
+        ctx.beginPath();
+    }
+});
+
+const draw = (e) =>{
+    if(!is_painting)return;
+    // ctx.lineWidth=lineWidth;
+    ctx.lineCap='round';
+    let pos = getMousePos(canvas, e);
+
+    const data={};
+    data.x=pos.x;
+    data.y=pos.y;
+    data.lineWidth=font.value;
+    data.color=select_color.value;
+
+    socket.emit('draw',data,room);
+
+    ctx.lineTo(pos.x,pos.y);
+    ctx.stroke();
+}
+canvas.addEventListener('mousemove',draw);
 
 
-
-
-
-
+function getMousePos(canvas, event) {
+    var rect = canvas.getBoundingClientRect(),
+      scaleX = canvas.width / rect.width,
+      scaleY = canvas.height / rect.height;
+  
+    return {
+      x: (event.clientX - rect.left) * scaleX,
+      y: (event.clientY - rect.top) * scaleY
+    }
+}
 

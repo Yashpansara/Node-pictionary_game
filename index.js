@@ -57,7 +57,7 @@ io.on('connection',socket=>{
       socket.join(r);
       data.room=r;
 
-      let s=new Set();
+      let s=new Array();
       room_data.set(r,s);
     }
     else if(data.type===2)
@@ -72,9 +72,11 @@ io.on('connection',socket=>{
 
     const arr=new Array();
     const members=room_data.get(data.room);
-    for(const tmp of members )arr.push(tmp);
+    for(const tmp of members )arr.push(tmp.data);
     socket.emit('member-data',arr);
-    room_data.get(data.room).add(data.username);
+
+    socket.data=data.username;
+    room_data.get(data.room).push(socket);
 
     if(data.type===2)socket.to(data.room).emit('new-member',data.username);
 
@@ -82,12 +84,31 @@ io.on('connection',socket=>{
 
   socket.on('leave',(username,room)=>{
     socket.leave(room);
-    if(room_data.has(room))room_data.get(room).delete(username);
+
+    if(room_data.has(room)) {
+      const roomMembers = room_data.get(room);
+      const updatedRoomMembers = roomMembers.filter(tmp => tmp.id !== socket.id);
+      room_data.set(room, updatedRoomMembers);
+    }
+    socket.data="";
     socket.to(room).emit('leave-member',username);
   });
 
   socket.on('send-text',(username,room,text)=>{
     socket.to(room).emit('receive-text',username,text);
+  });
+
+
+  socket.on('draw',(data,room)=>{
+    socket.to(room).emit('ondraw',data);
+  });
+
+  socket.on('mousedown',(data,room)=>{
+    socket.to(room).emit('onmousedown',data);
+  });
+
+  socket.on('change',(data,room)=>{
+    socket.to(room).emit('change',data);
   });
 
 
