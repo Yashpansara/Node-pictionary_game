@@ -153,6 +153,17 @@ for(let i=0;i<leave.length;++i)
     });
 }
 
+socket.on('leave-member',(username)=>{
+    let member=document.querySelector('.div1-up').children;
+    for(let i=0;i<member.length;++i)
+    {
+        if(member[i].textContent==username)
+        {
+            member[i].remove();
+            break;
+        }
+    }
+});
 
 
 const send=document.querySelector("#send");
