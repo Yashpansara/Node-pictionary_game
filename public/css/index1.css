@@ -41,6 +41,11 @@ body{
     border-radius: 10px;
     margin: 5px;
     width: 50%;
+    overflow-x: auto;
+}
+
+#i1 , #i21, #i22{
+    width: auto;
 }
 
 .inner >*{
@@ -55,7 +60,7 @@ body{
 .main{
     width: 100%;
     display: flex;
-    /* position: relative; */
+    position: relative;
 }
 
 .div1{width: 25%;}
@@ -82,6 +87,22 @@ body{
     justify-content: center;
     align-items: center;
     flex-direction: column;
+}
+
+.show-score
+{
+    position: absolute;
+    top: 25%;
+    bottom: 25%;
+    left: 25%;
+    right: 25%;
+    height: 50%;
+    width: 50%;
+    background-color:aqua;
+    color:black;
+    overflow-x: scroll;
+    overflow-y: scroll;
+    padding: 5px;
 }
 
 
@@ -137,6 +158,8 @@ body{
     display: flex;
     flex-direction: row;
     justify-content: space-around;
+    font-size: 30;
+    font-weight: 400;
 }
 .div2-word >*{
     display: inline-block;

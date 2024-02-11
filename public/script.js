@@ -36,13 +36,47 @@ const after_join=function()
 {
     change_html();
     document.querySelector('#room-id').textContent=room;
-    display_user(username);
     const i1=document.querySelector('#i1');
     const i21=document.querySelector('#i21');
     const i22=document.querySelector('#i22');
     i1.value="";
     i21.value="";
     i22.value="";
+
+    let parent=document.querySelector('.div1-up');
+        Array.from(parent.children).forEach(child => {
+            if (child !== parent.firstElementChild) {
+                parent.removeChild(child);
+            }
+        });
+    
+    parent=document.querySelector('.div3-up');
+    Array.from(parent.children).forEach(child => {
+        if (child !== parent.firstElementChild) {
+            parent.removeChild(child);
+        }
+    });
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.beginPath();
+
+    let show=document.querySelector('.show-score');
+    if(!show.classList.contains('hidden'))show.classList.toggle('hidden');
+
+    let box=document.querySelector('.show');
+    if(!box.classList.contains('hidden'))box.classList.toggle('hidden');
+
+    let w=document.querySelector('.word');
+    w.textContent="";
+
+    let time_left=document.querySelector('#time-left');
+    time_left.textContent="";
+
+    let situation=document.querySelector('.situation');
+    situation.textContent="Game is not started yet";
+
+    display_user(username);
+
 }
 
 
@@ -89,44 +123,36 @@ socket.on('member-data',arr=>{
     for(const user of arr)display_user(user);
 });
 
-const leave=document.querySelector("#leave");
-leave.addEventListener('click',function(){
-    socket.emit('leave');
+const leave=document.querySelectorAll(".leave");
+for(let i=0;i<leave.length;++i)
+{
+    leave[i].addEventListener('click',function(){
+        socket.emit('leave');
+        
+        // change_html();
     
-    // change_html();
-
-    username="";
-    room=0;
-    let parent=document.querySelector('.div1-up');
-    Array.from(parent.children).forEach(child => {
-        if (child !== parent.firstElementChild) {
-            parent.removeChild(child);
-        }
+        username="";
+        room=0;
+        let parent=document.querySelector('.div1-up');
+        Array.from(parent.children).forEach(child => {
+            if (child !== parent.firstElementChild) {
+                parent.removeChild(child);
+            }
+        });
+    
+        parent=document.querySelector('.div3-up');
+        Array.from(parent.children).forEach(child => {
+            if (child !== parent.firstElementChild) {
+                parent.removeChild(child);
+            }
+        });
+    
+        change_html();
+    
+    
     });
+}
 
-    parent=document.querySelector('.div3-up');
-    Array.from(parent.children).forEach(child => {
-        if (child !== parent.firstElementChild) {
-            parent.removeChild(child);
-        }
-    });
-
-    change_html();
-
-
-});
-
-socket.on('leave-member',(username)=>{
-    let member=document.querySelector('.div1-up').children;
-    for(let i=0;i<member.length;++i)
-    {
-        if(member[i].textContent==username)
-        {
-            member[i].remove();
-            break;
-        }
-    }
-});
 
 
 const send=document.querySelector("#send");
@@ -281,10 +307,15 @@ function getMousePos(canvas, event) {
 
 
 let x,y;
-const start=document.querySelector('#start');
-start.addEventListener('click',()=>{
-    socket.emit('start');
-});
+const start=document.querySelectorAll('.start');
+for(let i=0;i<start.length;++i)
+{
+    start[i].addEventListener('click',()=>{
+        let show=document.querySelector('.show-score');
+        if(!show.classList.contains('hidden'))show.classList.toggle('hidden');
+        socket.emit('start');
+    });
+}
 
 socket.on('start-res',(msg)=>{
     alert(msg);
@@ -292,26 +323,33 @@ socket.on('start-res',(msg)=>{
 
 socket.on('my-turn',(id,username,word)=>{
     console.log('hey,it my turn',socket.id);
+    let show=document.querySelector('.show-score');
+    if(!show.classList.contains('hidden'))show.classList.toggle('hidden');
     clearInterval(x);
     clearInterval(y);
 
+    can_draw=0;
 
     let time=document.querySelector('#start-in-time');
     let box=document.querySelector('.show');
     let w=document.querySelector('.word');
     let who=document.querySelector('#who-is-writing');
 
+    let situation=document.querySelector('.situation');
+
     box.classList.toggle('hidden');
     if(socket.id==id)
     {
         who.textContent=`you turn write ${word}`;
         w.textContent=word;
+        situation.textContent="Your turn";
     }
     else{
         who.textContent=`${username} turn`;
         let str="";
         for(let i=0;i<word.length;++i)str+="_ ";
         w.textContent=str;
+        situation.textContent=`${username} is writing`;
     }
 
 
@@ -328,7 +366,7 @@ socket.on('my-turn',(id,username,word)=>{
             box.classList.toggle('hidden'); 
 
             let time_left=document.querySelector('#time-left');
-            let count_t=25;
+            let count_t=10;
             time_left.textContent=count_t;
             y=setInterval(()=>{
                 --count_t;
@@ -341,6 +379,24 @@ socket.on('my-turn',(id,username,word)=>{
             },1000);
         }
     },1000);
+
+});
+
+socket.on('result',data=>{
+    let result=document.querySelector('#result');
+    result.innerHTML="";
+
+    let show=document.querySelector('.show-score');
+    if(show.classList.contains('hidden'))show.classList.toggle('hidden');
+
+    let code="";
+    code+='<tr><th>No</th><th>Name</th><th>Points</th></tr>';
+    for(let i=0;i<data.length;++i)
+    {
+        code+=`<tr><td>${data[i].rank}</td><td>${data[i].name}</td><td>${data[i].point}</td></tr>`;  
+    }
+
+    result.innerHTML=code;
 
 });
 

@@ -34,20 +34,27 @@
             <br>
             <h1 id="start-in-time"></h1>
         </div>
+        <div class="show-score hidden">
+            <table id="result">
+            </table>
+            <button class="start">start</button>
+            <button class="leave">leave</button>
+        </div>
         <div class="div1">
             <div class="div1-up">
                 <div class="username">Room Menbers</div>
             </div>
             <div class="div1-down">
-                <button id="start">Start</button>
+                <button class="start">Start</button>
                 <button id="room-id" onclick="coppy()">room Id</button>
-                <button id="leave">Leave</button>
+                <button class="leave">Leave</button>
             </div>
         </div>
         <div class="div2">
             <div class="div2-word">
                 <div class="word">word</div>
-                <div class="time">time left <h2 id="time-left"></h2></div>
+                <div class="situation"></div>
+                <div class="time">time left <div id="time-left"></div></div>
             </div>
             <div class="div2-up">
                 <canvas id="canvas"></canvas> 
