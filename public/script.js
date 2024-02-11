@@ -377,7 +377,7 @@ socket.on('my-turn',(id,username,word)=>{
             box.classList.toggle('hidden'); 
 
             let time_left=document.querySelector('#time-left');
-            let count_t=10;
+            let count_t=20;
             time_left.textContent=count_t;
             y=setInterval(()=>{
                 --count_t;

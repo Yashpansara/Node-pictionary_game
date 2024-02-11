@@ -297,7 +297,7 @@ function word_generator(){
         console.log('round completed');
       }
 
-    },15000);
+    },25000);
   }
 
   socket.on('start',()=>{
