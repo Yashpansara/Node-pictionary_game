@@ -21,7 +21,7 @@ import { generateSlug } from "random-word-slugs";
 // httpServer.listen(PORT,()=>console.log(`server started on ${PORT}`));
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 const server = createServer(app);
 const io=new Server(server);
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -67,6 +67,10 @@ io.on('connection',socket=>{
       else if(socket.id==room_data.get(room).current)
       {
         clearInterval(room_data.get(room).time);
+        if(room_data.get(room).complete.has(socket.id))room_data.get(room).complete.delete(socket.id);
+        if(room_data.get(room).draw.has(socket.id))room_data.get(room).draw.delete(socket.id);
+        if(room_data.get(room).ans.has(socket.id))room_data.get(room).ans.delete(socket.id);
+        
         io.to(room).emit('emergency-stop');
         setTimeout(after_start,2000,room);
       }
@@ -142,6 +146,10 @@ io.on('connection',socket=>{
       else if(socket.id==room_data.get(room).current)
       {
         clearInterval(room_data.get(room).time);
+        if(room_data.get(room).complete.has(socket.id))room_data.get(room).complete.delete(socket.id);
+        if(room_data.get(room).draw.has(socket.id))room_data.get(room).draw.delete(socket.id);
+        if(room_data.get(room).ans.has(socket.id))room_data.get(room).ans.delete(socket.id);
+        
         io.to(room).emit('emergency-stop');
         setTimeout(after_start,2000,room);
       }
@@ -151,13 +159,34 @@ io.on('connection',socket=>{
     socket.to(room).emit('leave-member',username);
   });
 
+
+
   socket.on('send-text',(text)=>{
     let tmp=socket.data;
     let username=tmp.username;
     let room=tmp.room;
 
     if(socket.id==room_data.get(room).current)return;
-    socket.to(room).emit('receive-text',username,text);
+    if(room_data.get(room).correct.has(socket.id))return;
+    if(room_data.get(room).word==text)
+    {
+      room_data.get(room).correct.add(socket.id);
+
+      let val;
+      if(room_data.get(room).ans.has(socket.id))val=room_data.get(room).ans.get(socket.id);
+      else val=0;
+      room_data.get(room).ans.set(socket.id,val+1);
+
+      if(room_data.get(room).draw.has(room_data.get(room).current))val=room_data.get(room).draw.get(room_data.get(room).current);
+      else val=0;
+      room_data.get(room).draw.set(room_data.get(room).current,val+1);
+
+      io.to(room).emit('receive-text',username,"",1,socket.id);
+    }
+    else
+    {
+      socket.to(room).emit('receive-text',username,text,0,socket.id);
+    }
   });
 
 
@@ -204,6 +233,7 @@ function word_generator(){
   {
     if(!room_data.has(room))return;
 
+      room_data.get(room).correct.clear();
       for(const tmp of room_data.get(room).player)
       {
         if(!room_data.get(room).complete.has(tmp.id))
@@ -218,11 +248,12 @@ function word_generator(){
 
       room_data.get(room).time=setInterval(()=>{
       let flag=0;
+      room_data.get(room).correct.clear();
       for(const tmp of room_data.get(room).player)
       {
         if(!room_data.get(room).complete.has(tmp.id))
         {
-          const word = word_generator();
+          room_data.get(room).word = word_generator();
           io.to(room).emit('my-turn',tmp.id,tmp.data.username,room_data.get(room).word);
           room_data.get(room).complete.add(tmp.id);
           room_data.get(room).current=tmp.id;
@@ -234,13 +265,17 @@ function word_generator(){
       if(flag==0)
       {
         clearInterval(room_data.get(room).time);
+
+        console.log(room_data.get(room).draw);
+        console.log(room_data.get(room).ans);
+
         room_data.get(room).current=-1;
         room_data.get(room).complete.clear();
         room_data.get(room).correct.clear();
         console.log('round completed');
       }
 
-    },16000);
+    },30000);
   }
 
   socket.on('start',()=>{

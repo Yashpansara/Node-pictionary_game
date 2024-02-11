@@ -140,7 +140,13 @@ send.addEventListener('click',function(){
 
 });
 
-socket.on('receive-text',(user,text)=>{
+socket.on('receive-text',(user,text,flag,id)=>{
+    if(flag==1)
+    {
+        if(socket.id==id)display_chat("system","You give correct answer");
+        else display_chat("system",`${user} give correct answer`);
+        return;
+    }
     display_chat(user,text);
 });
 
@@ -322,7 +328,7 @@ socket.on('my-turn',(id,username,word)=>{
             box.classList.toggle('hidden'); 
 
             let time_left=document.querySelector('#time-left');
-            let count_t=10;
+            let count_t=25;
             time_left.textContent=count_t;
             y=setInterval(()=>{
                 --count_t;
