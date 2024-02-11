@@ -393,7 +393,7 @@ socket.on('my-turn',(id,username,word)=>{
             if(id==socket.id)can_draw=1;
             box.classList.toggle('hidden'); 
 
-            let count_t=1;
+            let count_t=45;
             time_left.textContent=count_t;
             y=setInterval(()=>{
                 --count_t;

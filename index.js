@@ -309,7 +309,7 @@ function word_generator(){
         console.log('round completed');
       }
 
-    },5000);
+    },50000);
   }
 
   socket.on('start',()=>{
