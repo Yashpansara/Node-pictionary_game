@@ -4,6 +4,7 @@
 let username;
 let room;
 let socket=io();
+let x,y;
 
 const display_user= function(user)
 {
@@ -72,10 +73,17 @@ const after_join=function()
     let time_left=document.querySelector('#time-left');
     time_left.textContent="";
 
+    clearInterval(x);
+    clearInterval(y);
+
+    let time_text=document.querySelector('.time-text');
+    time_text.textContent="";
+    
+
     let situation=document.querySelector('.situation');
     situation.textContent="Game is not started yet";
 
-    display_user(username);
+    display_user(`you(${username})`);
 
 }
 
@@ -109,6 +117,11 @@ join2.addEventListener('click',function(){
     socket.emit('hello',data);       
 });
 
+socket.on('join-fail',flag=>{
+    if(flag==0)alert('room does not exist!');
+    else alert('game already started');
+});
+
 socket.on('hello-r',(flag,data)=>{
     username=data.username;
     room=data.room;
@@ -117,6 +130,7 @@ socket.on('hello-r',(flag,data)=>{
 
 socket.on('new-member',(username)=>{
     display_user(username);
+    display_chat("system",`${username} joined`);
 });
 
 socket.on('member-data',arr=>{
@@ -163,6 +177,7 @@ socket.on('leave-member',(username)=>{
             break;
         }
     }
+    display_chat("system",`${username} leaved`);
 });
 
 
@@ -172,7 +187,7 @@ send.addEventListener('click',function(){
     const text=document.querySelector('#chat-text').value;
     if(text=="")return;
     socket.emit('send-text',text);
-    display_chat(username,text);
+    display_chat("you",text);
     document.querySelector('#chat-text').value="";
 
 });
@@ -185,6 +200,10 @@ socket.on('receive-text',(user,text,flag,id)=>{
         return;
     }
     display_chat(user,text);
+});
+
+socket.on('new-round',()=>{
+    display_chat("system",`New round started..`);
 });
 
 
@@ -314,10 +333,6 @@ function getMousePos(canvas, event) {
 }
 
 
-
-
-
-let x,y;
 const start=document.querySelectorAll('.start');
 for(let i=0;i<start.length;++i)
 {
@@ -345,13 +360,15 @@ socket.on('my-turn',(id,username,word)=>{
     let box=document.querySelector('.show');
     let w=document.querySelector('.word');
     let who=document.querySelector('#who-is-writing');
-
     let situation=document.querySelector('.situation');
+    let time_text=document.querySelector('.time-text');
+    let time_left=document.querySelector('#time-left');
+    time_text.textContent="time left : ";
 
     box.classList.toggle('hidden');
     if(socket.id==id)
     {
-        who.textContent=`you turn write ${word}`;
+        who.textContent=`your turn , write ${word}`;
         w.textContent=word;
         situation.textContent="Your turn";
     }
@@ -376,8 +393,7 @@ socket.on('my-turn',(id,username,word)=>{
             if(id==socket.id)can_draw=1;
             box.classList.toggle('hidden'); 
 
-            let time_left=document.querySelector('#time-left');
-            let count_t=20;
+            let count_t=1;
             time_left.textContent=count_t;
             y=setInterval(()=>{
                 --count_t;

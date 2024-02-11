@@ -35,10 +35,13 @@
             <h1 id="start-in-time"></h1>
         </div>
         <div class="show-score hidden">
+            <div style="font-size: 20px;font-weight: bold;">Round Completed</div>
             <table id="result">
             </table>
-            <button class="start">start</button>
-            <button class="leave">leave</button>
+            <div class="show-score-down">
+                <button class="start">start</button>
+                <button class="leave">leave</button>
+            </div>
         </div>
         <div class="div1">
             <div class="div1-up">
@@ -54,7 +57,10 @@
             <div class="div2-word">
                 <div class="word">word</div>
                 <div class="situation"></div>
-                <div class="time">time left <div id="time-left"></div></div>
+                <div class="time-combined">
+                    <div class="time-text">time left :</div>
+                    <div id="time-left"></div>
+                </div> 
             </div>
             <div class="div2-up">
                 <canvas id="canvas"></canvas> 
@@ -65,7 +71,7 @@
                     <button id="clear">clear</button>
                 </div>
                 <div class="div2-down2">
-                    <input type="range" id="font"  min="0.5" max="5">
+                    <input type="range" id="font"  min="0.5" max="5" style="width: 50%;">
                 </div>
             </div>
         </div>

@@ -112,8 +112,20 @@ io.on('connection',socket=>{
     else if(data.type===2)
     {
       const rooms = io.of("/").adapter.rooms;
-      if(rooms.has(data.room))socket.join(data.room);
-      else return;
+      if(rooms.has(data.room))
+      {
+        if(room_data.get(data.room).current==-1)socket.join(data.room);
+        else
+        {
+          socket.emit('join-fail',1);
+          return;
+        }
+      }
+      else 
+      {
+        socket.emit('join-fail',0);
+        return;
+      }
     }
 
     let flag=true;
@@ -297,19 +309,18 @@ function word_generator(){
         console.log('round completed');
       }
 
-    },25000);
+    },5000);
   }
 
   socket.on('start',()=>{
     let tmp=socket.data;
     let username=tmp.username;
     let room=tmp.room;
-    
-    console.log("hy");
 
     if(socket.id==room_data.get(room).player[0].id && room_data.get(room).current===-1)
     {
       console.log('round-started');
+      io.to(room).emit('new-round');
       after_start(room);
     }
     else if(socket.id==room_data.get(room).player[0].id && room_data.get(room).current!=-1)
