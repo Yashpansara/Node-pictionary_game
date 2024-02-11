@@ -7,6 +7,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 import { Server } from 'socket.io';
 import bodyParser from "body-parser";
 import { type } from "os";
+import { generateSlug } from "random-word-slugs";
 
 'use strict';
 
@@ -27,6 +28,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 let room_data=new Map();
+let start;
 
 
 function random_generator()
@@ -40,11 +42,38 @@ function random_generator()
   return rand;
 }
 
+
 io.on('connection',socket=>{
-  console.log('connected');
+  console.log('connected',socket.id);
 
   socket.on('disconnect',()=>{
-    console.log("disconnect");
+    console.log('disconnected',socket.data);
+
+    let tmp=socket.data;
+    let username=tmp.username;
+    let room=tmp.room;
+    socket.leave(room);
+
+    if(room_data.has(room)) {
+      const roomMembers = room_data.get(room).player;
+      const updatedRoomMembers = roomMembers.filter(tmp => tmp.id !== socket.id);
+      // room_data.set(room, updatedRoomMembers);
+      room_data.get(room).player=updatedRoomMembers;
+      if(room_data.get(room).player.length==0)
+      {
+        clearInterval(room_data.get(room).time);
+        room_data.delete(room);
+      }
+      else if(socket.id==room_data.get(room).current)
+      {
+        clearInterval(room_data.get(room).time);
+        io.to(room).emit('emergency-stop');
+        setTimeout(after_start,2000,room);
+      }
+    }
+
+    socket.data="";
+    socket.to(room).emit('leave-member',username);
   });
 
   socket.on('hello',(data)=>{
@@ -57,7 +86,16 @@ io.on('connection',socket=>{
       socket.join(r);
       data.room=r;
 
-      let s=new Array();
+      let s={};
+      s.player=new Array();
+      s.current=-1;
+      s.time;
+      s.word;
+      s.correct=new Set();
+      s.draw=new Map();
+      s.ans=new Map();
+      s.complete=new Set();
+
       room_data.set(r,s);
     }
     else if(data.type===2)
@@ -71,48 +109,162 @@ io.on('connection',socket=>{
     socket.emit('hello-r',flag,data);
 
     const arr=new Array();
-    const members=room_data.get(data.room);
-    for(const tmp of members )arr.push(tmp.data);
+    const members=room_data.get(data.room).player;
+    for(const tmp of members )arr.push(tmp.data.username);
     socket.emit('member-data',arr);
 
-    socket.data=data.username;
-    room_data.get(data.room).push(socket);
+    let tmp={};
+    tmp.username=data.username;
+    tmp.room=data.room;
+    socket.data=tmp;
+    room_data.get(data.room).player.push(socket);
 
     if(data.type===2)socket.to(data.room).emit('new-member',data.username);
 
   });
 
-  socket.on('leave',(username,room)=>{
+  socket.on('leave',()=>{
+    let tmp=socket.data;
+    let username=tmp.username;
+    let room=tmp.room;
     socket.leave(room);
 
     if(room_data.has(room)) {
-      const roomMembers = room_data.get(room);
+      const roomMembers = room_data.get(room).player;
       const updatedRoomMembers = roomMembers.filter(tmp => tmp.id !== socket.id);
-      room_data.set(room, updatedRoomMembers);
+      // room_data.set(room, updatedRoomMembers);
+      room_data.get(room).player=updatedRoomMembers;
+      if(room_data.get(room).player.length==0)
+      {
+        clearInterval(room_data.get(room).time);
+        room_data.delete(room);
+      }
+      else if(socket.id==room_data.get(room).current)
+      {
+        clearInterval(room_data.get(room).time);
+        io.to(room).emit('emergency-stop');
+        setTimeout(after_start,2000,room);
+      }
     }
+
     socket.data="";
     socket.to(room).emit('leave-member',username);
   });
 
-  socket.on('send-text',(username,room,text)=>{
+  socket.on('send-text',(text)=>{
+    let tmp=socket.data;
+    let username=tmp.username;
+    let room=tmp.room;
+
+    if(socket.id==room_data.get(room).current)return;
     socket.to(room).emit('receive-text',username,text);
   });
 
 
-  socket.on('draw',(data,room)=>{
+
+
+
+
+  socket.on('draw',(data)=>{
+    let tmp=socket.data;
+    let username=tmp.username;
+    let room=tmp.room;
     socket.to(room).emit('ondraw',data);
   });
 
-  socket.on('mousedown',(data,room)=>{
+  socket.on('mousedown',(data)=>{
+    let tmp=socket.data;
+    let username=tmp.username;
+    let room=tmp.room;
     socket.to(room).emit('onmousedown',data);
   });
 
-  socket.on('change',(data,room)=>{
+  socket.on('change',(data)=>{
+    let tmp=socket.data;
+    let username=tmp.username;
+    let room=tmp.room;
     socket.to(room).emit('change',data);
   });
 
+function word_generator(){
+  const options = {
+    format: "camel",
+    partsOfSpeech: ["noun"],
+    categories: {
+      noun: ["animals", "food", "people", "sports"],
+      },
+  };
+
+  return generateSlug(1, options);
+
+}
+
+
+  const after_start=function(room)
+  {
+    if(!room_data.has(room))return;
+
+      for(const tmp of room_data.get(room).player)
+      {
+        if(!room_data.get(room).complete.has(tmp.id))
+        {
+          room_data.get(room).word = word_generator();
+          io.to(room).emit('my-turn',tmp.id,tmp.data.username,room_data.get(room).word);
+          room_data.get(room).complete.add(tmp.id);
+          room_data.get(room).current=tmp.id;
+          break;
+        }
+      }
+
+      room_data.get(room).time=setInterval(()=>{
+      let flag=0;
+      for(const tmp of room_data.get(room).player)
+      {
+        if(!room_data.get(room).complete.has(tmp.id))
+        {
+          const word = word_generator();
+          io.to(room).emit('my-turn',tmp.id,tmp.data.username,room_data.get(room).word);
+          room_data.get(room).complete.add(tmp.id);
+          room_data.get(room).current=tmp.id;
+          flag=1;
+          break;
+        }
+      }
+
+      if(flag==0)
+      {
+        clearInterval(room_data.get(room).time);
+        room_data.get(room).current=-1;
+        room_data.get(room).complete.clear();
+        room_data.get(room).correct.clear();
+        console.log('round completed');
+      }
+
+    },16000);
+  }
+
+  socket.on('start',()=>{
+    let tmp=socket.data;
+    let username=tmp.username;
+    let room=tmp.room;
+
+    if(socket.id==room_data.get(room).player[0].id && room_data.get(room).current===-1)
+    {
+      console.log('round-started');
+      after_start(room);
+    }
+    else if(socket.id==room_data.get(room).player[0].id && room_data.get(room).current!=-1)
+    {
+      socket.emit('start-res','game is already started');
+    }
+    else
+    {
+      socket.emit('start-res','Only admin can start the game');
+    }
+  });
 
 });
+
 
 
 

@@ -91,7 +91,7 @@ socket.on('member-data',arr=>{
 
 const leave=document.querySelector("#leave");
 leave.addEventListener('click',function(){
-    socket.emit('leave',username,room);
+    socket.emit('leave');
     
     // change_html();
 
@@ -134,7 +134,7 @@ send.addEventListener('click',function(){
     
     const text=document.querySelector('#chat-text').value;
     if(text=="")return;
-    socket.emit('send-text',username,room,text);
+    socket.emit('send-text',text);
     display_chat(username,text);
     document.querySelector('#chat-text').value="";
 
@@ -145,57 +145,7 @@ socket.on('receive-text',(user,text)=>{
 });
 
 
-// let canvas = document.querySelector('canvas');
-// let parentDiv = document.querySelector('.div2-up');
-// canvas.style.width='100%';
-// canvas.style.height='100%';
-// canvas.style.boxSizing = 'border-box';
 
-// let ctx=canvas.getContext('2d');
-
-// let isDrawing = false;
-// let lastX = 0;
-// let lastY = 0;
-
-// function draw(x, y) {
-//     if (!isDrawing) return;
-    
-//     ctx.beginPath();
-//     ctx.moveTo(lastX, lastY);
-//     ctx.lineTo(x, y);
-//     ctx.stroke();
-
-//     lastX = x;
-//     lastY = y;
-// }
-
-// canvas.addEventListener('mousedown', function(event) {
-//     isDrawing = true;
-//     let pos = getMousePos(canvas, event);
-//     lastX = pos.x;
-//     lastY = pos.y;
-// });
-
-// canvas.addEventListener('mousemove', function(event) {
-//     let pos = getMousePos(canvas, event);
-//     draw(pos.x, pos.y);
-// });
-
-// canvas.addEventListener('mouseup', function() {
-//     isDrawing = false;
-// });
-
-// function getMousePos(canvas, event) {
-
-//     var rect = canvas.getBoundingClientRect(),
-//       scaleX = canvas.width / rect.width,
-//       scaleY = canvas.height / rect.height;
-  
-//     return {
-//       x: (event.clientX - rect.left) * scaleX,
-//       y: (event.clientY - rect.top) * scaleY
-//     }
-// }
 
 
 let canvas = document.querySelector('canvas');
@@ -205,33 +155,36 @@ canvas.style.height='100%';
 canvas.style.boxSizing = 'border-box';
 
 let is_painting =false;
+let can_draw=0;
 let lineWidth=0.5;
 
 let clear=document.getElementById('clear');
 clear.addEventListener('click',()=>{
-    socket.emit('clear',room);
+    if(!can_draw)return;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.beginPath();
 
     let data={};
     data.action="clear";
-    socket.emit('change',data,room);
+    socket.emit('change',data);
 });
 
 let select_color=document.getElementById('select-color');
 select_color.addEventListener('change',()=>{
+    if(!can_draw)return;
     ctx.strokeStyle=select_color.value;
     ctx.beginPath();
 
     let data={};
     data.action="color";
     data.color=select_color.value;
-    socket.emit('change',data,room);
+    socket.emit('change',data);
 
 });
 
 let font=document.getElementById('font');
 font.addEventListener('change',()=>{
+    if(!can_draw)return;
     // lineWidth=font.value;
     ctx.lineWidth=font.value;
     ctx.beginPath();
@@ -239,20 +192,22 @@ font.addEventListener('change',()=>{
     let data={};
     data.action="font";
     data.lineWidth=font.value;
-    socket.emit('change',data,room);
+    socket.emit('change',data);
 
 });
 
 canvas.addEventListener('mousedown',(e)=>{
+    if(!can_draw)return;
     is_painting=true;
     let pos = getMousePos(canvas, e);
 
-    socket.emit('mousedown',pos,room);
+    socket.emit('mousedown',pos);
 
     ctx.moveTo(pos.x,pos.y);
 });
 
 canvas.addEventListener('mouseup',(e)=>{
+    if(!can_draw)return;
     is_painting=false;
 });
 
@@ -285,6 +240,7 @@ socket.on('change',(data)=>{
 
 const draw = (e) =>{
     if(!is_painting)return;
+    if(!can_draw)return;
     // ctx.lineWidth=lineWidth;
     ctx.lineCap='round';
     let pos = getMousePos(canvas, e);
@@ -295,7 +251,7 @@ const draw = (e) =>{
     data.lineWidth=font.value;
     data.color=select_color.value;
 
-    socket.emit('draw',data,room);
+    socket.emit('draw',data);
 
     ctx.lineTo(pos.x,pos.y);
     ctx.stroke();
@@ -314,3 +270,84 @@ function getMousePos(canvas, event) {
     }
 }
 
+
+
+
+
+let x,y;
+const start=document.querySelector('#start');
+start.addEventListener('click',()=>{
+    socket.emit('start');
+});
+
+socket.on('start-res',(msg)=>{
+    alert(msg);
+});
+
+socket.on('my-turn',(id,username,word)=>{
+    console.log('hey,it my turn',socket.id);
+    clearInterval(x);
+    clearInterval(y);
+
+
+    let time=document.querySelector('#start-in-time');
+    let box=document.querySelector('.show');
+    let w=document.querySelector('.word');
+    let who=document.querySelector('#who-is-writing');
+
+    box.classList.toggle('hidden');
+    if(socket.id==id)
+    {
+        who.textContent=`you turn write ${word}`;
+        w.textContent=word;
+    }
+    else{
+        who.textContent=`${username} turn`;
+        let str="";
+        for(let i=0;i<word.length;++i)str+="_ ";
+        w.textContent=str;
+    }
+
+
+
+    let count=3;
+    time.textContent=count;
+    x=setInterval(()=>{
+        --count;
+        if(count>=0)time.textContent=count;
+        if(count<0)
+        {
+            clearInterval(x);
+            if(id==socket.id)can_draw=1;
+            box.classList.toggle('hidden'); 
+
+            let time_left=document.querySelector('#time-left');
+            let count_t=10;
+            time_left.textContent=count_t;
+            y=setInterval(()=>{
+                --count_t;
+                if(count_t>=0)time_left.textContent=count_t;
+                if(count_t<0)
+                {
+                    clearInterval(y);
+                    can_draw=0;
+                }
+            },1000);
+        }
+    },1000);
+
+});
+
+socket.on('emergency-stop',()=>{
+    clearInterval(x);
+    clearInterval(y);
+    let time=document.querySelector('#start-in-time');
+    let time_left=document.querySelector('#time-left');
+    time.textContent=0;
+    time_left.textContent=0;
+    let box=document.querySelector('.show');
+    if(!box.classList.contains('hidden'))
+    {
+        box.classList.toggle('hidden');
+    }
+});
