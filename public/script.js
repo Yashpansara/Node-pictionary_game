@@ -61,6 +61,9 @@ const after_join=function()
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.beginPath();
 
+    let select_color=document.getElementById('select-color');
+    select_color.value='black';
+
     let show=document.querySelector('.show-score');
     if(!show.classList.contains('hidden'))show.classList.toggle('hidden');
 
@@ -83,7 +86,7 @@ const after_join=function()
     let situation=document.querySelector('.situation');
     situation.textContent="Game is not started yet";
 
-    display_user(`you(${username})`);
+    display_user(`${username}(you)`);
 
 }
 
@@ -187,19 +190,15 @@ send.addEventListener('click',function(){
     const text=document.querySelector('#chat-text').value;
     if(text=="")return;
     socket.emit('send-text',text);
-    display_chat("you",text);
+    // display_chat("you",text);
     document.querySelector('#chat-text').value="";
 
 });
 
-socket.on('receive-text',(user,text,flag,id)=>{
-    if(flag==1)
-    {
-        if(socket.id==id)display_chat("system","You give correct answer");
-        else display_chat("system",`${user} give correct answer`);
-        return;
-    }
+socket.on('receive-text',(user,text,id)=>{
+    if(socket.id===id && user!=="system")user="you";
     display_chat(user,text);
+
 });
 
 socket.on('new-round',()=>{
@@ -349,6 +348,24 @@ socket.on('start-res',(msg)=>{
 
 socket.on('my-turn',(id,username,word)=>{
     console.log('hey,it my turn',socket.id);
+
+
+    if(socket.id==id)
+    {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.beginPath();
+        let data={};
+        data.action="clear";
+        socket.emit('change',data);
+
+        ctx.strokeStyle=select_color.value;
+        ctx.beginPath();
+        let new_data={};
+        new_data.action="color";
+        new_data.color=select_color.value;
+        socket.emit('change',new_data);
+    }
+    
     let show=document.querySelector('.show-score');
     if(!show.classList.contains('hidden'))show.classList.toggle('hidden');
     clearInterval(x);
@@ -420,7 +437,8 @@ socket.on('result',data=>{
     code+='<tr><th>No</th><th>Name</th><th>Points</th></tr>';
     for(let i=0;i<data.length;++i)
     {
-        code+=`<tr><td>${data[i].rank}</td><td>${data[i].name}</td><td>${data[i].point}</td></tr>`;  
+        if(data[i].id===socket.id)code+=`<tr><td>${data[i].rank}</td><td>${data[i].name}(you)</td><td>${data[i].point}</td></tr>`; 
+        else code+=`<tr><td>${data[i].rank}</td><td>${data[i].name}</td><td>${data[i].point}</td></tr>`;   
     }
 
     result.innerHTML=code;

@@ -173,11 +173,14 @@ io.on('connection',socket=>{
       else val=0;
       room_data.get(room).draw.set(room_data.get(room).current,val+1);
 
-      io.to(room).emit('receive-text',username,"",1,socket.id);
+      // io.to(room).emit('receive-text',username,"",1,socket.id);
+      socket.emit('receive-text',username,text,socket.id);
+      socket.to(room).emit('receive-text',"system",`${username} give correct answer.`,socket.id);
+      socket.emit('receive-text',"system",`you give correct answer.`,socket.id);
     }
     else
     {
-      socket.to(room).emit('receive-text',username,text,0,socket.id);
+      io.to(room).emit('receive-text',username,text,socket.id);
     }
   });
 
